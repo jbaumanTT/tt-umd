@@ -447,9 +447,11 @@ public:
      * @param config tlb_data configuration applied to the new window.
      * @param mapping UC or WC.
      * @param size Requested TLB size in bytes (0 means try arch-supported sizes in order).
+     * @param mmap_length Bytes to map into host address space (<= size); 0 maps the full aperture.
+     *                    Only meaningful when an explicit size is given; ignored by simulation backends.
      */
     virtual std::unique_ptr<TlbWindow> get_io_window(
-        tlb_data config, TlbMapping mapping = TlbMapping::WC, size_t size = 0);
+        tlb_data config, TlbMapping mapping = TlbMapping::WC, size_t size = 0, size_t mmap_length = 0);
 
     virtual void dma_write_to_device(const void *src, size_t size, tt_xy_pair core, uint64_t addr);
     void dma_write_to_device(const void *src, size_t size, CoreCoord core, uint64_t addr);

@@ -28,7 +28,8 @@ namespace tt::umd {
 
 TLBManager::TLBManager(TTDevice* tt_device) : tt_device_(tt_device) {}
 
-void TLBManager::configure_tlb(tt_xy_pair core, size_t tlb_size, uint64_t address, uint64_t ordering) {
+void TLBManager::configure_tlb(
+    tt_xy_pair core, size_t tlb_size, uint64_t address, uint64_t ordering, size_t mmap_length) {
     ZoneScopedC(tracy::Color::Cyan);
     UMD_ASSERT(
         ordering == tlb_data::Strict || ordering == tlb_data::Posted || ordering == tlb_data::Relaxed,
@@ -43,7 +44,7 @@ void TLBManager::configure_tlb(tt_xy_pair core, size_t tlb_size, uint64_t addres
     config.noc_sel = is_selected_noc1() ? 1 : 0;
     config.ordering = ordering;
     config.static_vc = get_tt_device()->get_architecture_implementation()->get_static_vc();
-    std::unique_ptr<TlbWindow> tlb_window = allocate_tlb_window(config, TlbMapping::WC, tlb_size);
+    std::unique_ptr<TlbWindow> tlb_window = allocate_tlb_window(config, TlbMapping::WC, tlb_size, mmap_length);
 
     log_debug(
         LogUMD,
@@ -95,9 +96,9 @@ tlb_configuration TLBManager::get_tlb_configuration(tt_xy_pair core) {
 }
 
 std::unique_ptr<TlbWindow> TLBManager::allocate_tlb_window(
-    tlb_data config, const TlbMapping mapping, const size_t tlb_size) {
+    tlb_data config, const TlbMapping mapping, const size_t tlb_size, const size_t mmap_length) {
     ZoneScopedC(tracy::Color::Cyan);
-    return tt_device_->get_io_window(config, mapping, tlb_size);
+    return tt_device_->get_io_window(config, mapping, tlb_size, mmap_length);
 }
 
 void TLBManager::clear_mapped_tlbs() {

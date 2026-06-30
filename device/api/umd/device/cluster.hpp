@@ -228,16 +228,20 @@ public:
      *
      * @param logical_device_id Logical Device being targeted.
      * @param core The TLB will be programmed to point to this core.
-     * @param tlb_size TLB size that will be programmed.
+     * @param tlb_size TLB size that will be programmed (the hardware aperture).
      * @param address Start address TLB is mapped to.
      * @param ordering Ordering mode for the TLB.
+     * @param mmap_length Bytes to map into host address space (<= tlb_size); 0 maps the full aperture.
+     *                    Use a smaller value when the aperture exceeds the backed device memory at the
+     *                    endpoint (e.g. the BH 4 GiB DRAM window) so its reserved tail is left unmapped.
      */
     void configure_tlb(
         ChipId logical_device_id,
         tt_xy_pair core,
         size_t tlb_size,
         uint64_t address,
-        uint64_t ordering = tlb_data::Relaxed);
+        uint64_t ordering = tlb_data::Relaxed,
+        size_t mmap_length = 0);
 
     /**
      * Configure a TLB to point to a specific core and an address within that core. Should be done for Static TLBs.
@@ -245,16 +249,20 @@ public:
      *
      * @param logical_device_id Logical Device being targeted.
      * @param core The TLB will be programmed to point to this core.
-     * @param tlb_size TLB size that will be programmed.
+     * @param tlb_size TLB size that will be programmed (the hardware aperture).
      * @param address Start address TLB is mapped to.
      * @param ordering Ordering mode for the TLB.
+     * @param mmap_length Bytes to map into host address space (<= tlb_size); 0 maps the full aperture.
+     *                    Use a smaller value when the aperture exceeds the backed device memory at the
+     *                    endpoint (e.g. the BH 4 GiB DRAM window) so its reserved tail is left unmapped.
      */
     void configure_tlb(
         ChipId logical_device_id,
         CoreCoord core,
         size_t tlb_size,
         uint64_t address,
-        uint64_t ordering = tlb_data::Relaxed);
+        uint64_t ordering = tlb_data::Relaxed,
+        size_t mmap_length = 0);
 
     /**
      * Pass in ethernet cores with active links for a specific MMIO chip. When called, this function will force UMD to

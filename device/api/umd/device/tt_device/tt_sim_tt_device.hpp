@@ -92,7 +92,8 @@ public:
 
     SimulationSysmemManager *get_sysmem_manager() override { return sysmem_manager_.get(); }
 
-    std::unique_ptr<TlbWindow> get_io_window(tlb_data config, TlbMapping mapping, size_t size) override;
+    std::unique_ptr<TlbWindow> get_io_window(
+        tlb_data config, TlbMapping mapping, size_t size, size_t mmap_length = 0) override;
 
     SimulationTlbAllocator *get_tlb_allocator() { return tlb_allocator_.get(); }
 

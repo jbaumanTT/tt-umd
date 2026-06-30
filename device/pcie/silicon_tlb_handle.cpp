@@ -16,15 +16,22 @@
 
 namespace tt::umd {
 
-SiliconTlbHandle::SiliconTlbHandle(PCIDevice& pci_device, size_t size, const TlbMapping tlb_mapping) :
+SiliconTlbHandle::SiliconTlbHandle(
+    PCIDevice& pci_device, size_t size, const TlbMapping tlb_mapping, size_t mmap_size) :
     pci_device_(pci_device) {
     tlb_size_ = size;
+    // Clamp to the aperture; 0 means "map the whole aperture".
+    mmap_size_ = (mmap_size == 0 || mmap_size > size) ? size : mmap_size;
     tlb_mapping_ = tlb_mapping;
 
     tt_device_t* tt_device = pci_device_.get_tt_device_handle();
 
-    int ret_code = tt_tlb_alloc(
-        tt_device, size, tlb_mapping_ == TlbMapping::UC ? TT_MMIO_CACHE_MODE_UC : TT_MMIO_CACHE_MODE_WC, &tlb_handle_);
+    int ret_code = tt_tlb_alloc_mapped(
+        tt_device,
+        size,
+        mmap_size_,
+        tlb_mapping_ == TlbMapping::UC ? TT_MMIO_CACHE_MODE_UC : TT_MMIO_CACHE_MODE_WC,
+        &tlb_handle_);
 
     if (ret_code != 0) {
         UMD_THROW(
@@ -35,7 +42,7 @@ SiliconTlbHandle::SiliconTlbHandle(PCIDevice& pci_device, size_t size, const Tlb
     tt_tlb_get_id(tlb_handle_, reinterpret_cast<uint32_t*>(&tlb_id_));
 
     tt_tlb_get_mmio(tlb_handle_, reinterpret_cast<void**>(&tlb_base_));
-    TracyAllocN(tlb_base_, tlb_size_, "TLB");
+    TracyAllocN(tlb_base_, mmap_size_, "TLB");
 }
 
 SiliconTlbHandle::~SiliconTlbHandle() noexcept { SiliconTlbHandle::free_tlb(); }

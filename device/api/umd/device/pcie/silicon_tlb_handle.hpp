@@ -28,10 +28,16 @@ public:
      * Allocates a TLB from KMD of the specified size and maps it to the user space.
      *
      * @param tt_device Pointer to the tt_device structure representing the PCI device.
-     * @param size Size of the TLB to allocate.
+     * @param size Size of the TLB to allocate (the hardware aperture).
      * @param tlb_mapping Type of TLB mapping (UC or WC). The first mapping of TLB determines its caching behavior.
+     * @param mmap_size Bytes to map into host address space (<= size); 0 maps the full aperture. The
+     *                  unmapped tail has no page-table entry and is unreachable by the host CPU.
      */
-    SiliconTlbHandle(PCIDevice& pci_device, size_t size, const TlbMapping tlb_mapping = TlbMapping::UC);
+    SiliconTlbHandle(
+        PCIDevice& pci_device,
+        size_t size,
+        const TlbMapping tlb_mapping = TlbMapping::UC,
+        size_t mmap_size = 0);
 
     ~SiliconTlbHandle() noexcept override;
 

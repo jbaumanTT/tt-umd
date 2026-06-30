@@ -276,10 +276,12 @@ public:
     /**
      * Allocate TLB resource from KMD.
      *
-     * @param tlb_size Size of the TLB caller wants to allocate.
+     * @param tlb_size Size of the TLB caller wants to allocate (the hardware aperture).
      * @param mapping_type Type of TLB mapping to allocate (UC or WC).
+     * @param mmap_length Bytes to map into host address space (<= tlb_size); 0 maps the full aperture.
      */
-    std::unique_ptr<TlbHandle> allocate_tlb(const size_t tlb_size, const TlbMapping tlb_mapping = TlbMapping::UC);
+    std::unique_ptr<TlbHandle> allocate_tlb(
+        const size_t tlb_size, const TlbMapping tlb_mapping = TlbMapping::UC, const size_t mmap_length = 0);
 
     /**
      * Configure TLB register in user space by writing directly to BAR0.

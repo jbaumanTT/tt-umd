@@ -50,7 +50,8 @@ struct tt_device_t {
 
 struct tt_tlb_t {
     uint32_t id;
-    size_t size;
+    size_t size;     /* Hardware TLB aperture size. */
+    size_t mmap_len; /* Bytes actually mapped into the host address space (<= size). */
     void* mmio;
 };
 
@@ -403,6 +404,12 @@ int tt_dma_get_noc_addr(tt_dma_t* dma, uint64_t* out_noc_addr) {
 }
 
 int tt_tlb_alloc(tt_device_t* dev, size_t size, enum tt_tlb_cache_mode cache, tt_tlb_t** out_tlb) {
+    /* Map the full hardware aperture by default. */
+    return tt_tlb_alloc_mapped(dev, size, size, cache, out_tlb);
+}
+
+int tt_tlb_alloc_mapped(
+    tt_device_t* dev, size_t size, size_t mmap_size, enum tt_tlb_cache_mode cache, tt_tlb_t** out_tlb) {
     struct tt_tlb_t* tlb = malloc(sizeof(struct tt_tlb_t));
 
     if (!tlb) {
@@ -410,6 +417,9 @@ int tt_tlb_alloc(tt_device_t* dev, size_t size, enum tt_tlb_cache_mode cache, tt
     }
 
     memset(tlb, 0, sizeof(struct tt_tlb_t));
+
+    /* A zero mmap_size means "map the whole aperture". Never map more than the aperture. */
+    size_t map_len = (mmap_size == 0 || mmap_size > size) ? size : mmap_size;
 
     struct tenstorrent_allocate_tlb alloc_tlb = {0};
     alloc_tlb.in.size = size;
@@ -423,7 +433,8 @@ int tt_tlb_alloc(tt_device_t* dev, size_t size, enum tt_tlb_cache_mode cache, tt
     off_t offset = cache == TT_MMIO_CACHE_MODE_UC ? alloc_tlb.out.mmap_offset_uc : alloc_tlb.out.mmap_offset_wc;
     tlb->id = alloc_tlb.out.id;
     tlb->size = size;
-    tlb->mmio = mmap(NULL, tlb->size, PROT_READ | PROT_WRITE, MAP_SHARED, dev->fd, offset);
+    tlb->mmap_len = map_len;
+    tlb->mmio = mmap(NULL, tlb->mmap_len, PROT_READ | PROT_WRITE, MAP_SHARED, dev->fd, offset);
 
     if (tlb->mmio == MAP_FAILED) {
         struct tenstorrent_free_tlb free_tlb = {0};
@@ -447,7 +458,7 @@ int tt_tlb_free(tt_device_t* dev, tt_tlb_t* tlb) {
     int ret = 0;
 
     /* Unmap the userspace view of the TLB. This is required by the driver. */
-    munmap(tlb->mmio, tlb->size);
+    munmap(tlb->mmio, tlb->mmap_len);
 
     /* Tell the driver to release the backing hardware resource. */
     struct tenstorrent_free_tlb free_tlb = {0};

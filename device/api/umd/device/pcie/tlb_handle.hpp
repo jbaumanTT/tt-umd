@@ -33,9 +33,16 @@ public:
     uint8_t* get_base() const { return tlb_base_; }
 
     /**
-     * Returns the size of the TLB.
+     * Returns the size of the TLB (the hardware aperture). Address alignment is derived from this.
      */
     size_t get_size() const { return tlb_size_; }
+
+    /**
+     * Returns the number of bytes actually mapped into the host address space. This is <= get_size();
+     * it is smaller when the aperture is larger than the device memory backed at the endpoint and the
+     * unmapped tail is deliberately left without a page-table entry. Access bounds checks use this.
+     */
+    size_t get_mmap_size() const { return mmap_size_ != 0 ? mmap_size_ : tlb_size_; }
 
     /**
      * Returns the current configuration of the TLB.
@@ -63,6 +70,7 @@ protected:
     int tlb_id_ = 0;
     uint8_t* tlb_base_ = nullptr;
     size_t tlb_size_ = 0;
+    size_t mmap_size_ = 0;  // Host-mapped bytes; 0 means the full aperture (tlb_size_).
     tlb_data tlb_config_{};
     TlbMapping tlb_mapping_ = TlbMapping::UC;
 

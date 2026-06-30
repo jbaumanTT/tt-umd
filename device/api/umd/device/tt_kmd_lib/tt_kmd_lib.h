@@ -339,6 +339,26 @@ int tt_dma_get_noc_addr(tt_dma_t* dma, uint64_t* out_noc_addr);
 int tt_tlb_alloc(tt_device_t* dev, size_t size, enum tt_tlb_cache_mode cache, tt_tlb_t** out_tlb);
 
 /**
+ * @brief Allocates a TLB window with a host mapping smaller than the hardware aperture.
+ *
+ * Identical to `tt_tlb_alloc()` except that only the first `mmap_size` bytes of the `size`-byte
+ * hardware aperture are mapped into the host address space. Addresses in the unmapped tail have no
+ * page-table entry, so the host CPU cannot access (including speculatively read) them. Use this when
+ * the aperture is larger than the device memory actually backed at that endpoint (e.g. the Blackhole
+ * 4 GiB DRAM window, whose top region is reserved). The hardware aperture (and thus address alignment)
+ * is unchanged. A `mmap_size` of 0, or one larger than `size`, maps the full aperture.
+ *
+ * @param dev Device handle
+ * @param size Hardware aperture size; 1, 2, or 16 MiB (WH); 2 MiB or 4 GiB (BH)
+ * @param mmap_size Bytes to map into host address space (<= size); 0 means the full aperture
+ * @param cache Caching attribute; see `enum tt_tlb_cache_mode`
+ * @param out_tlb On success, a handle to the allocated TLB window
+ * @return 0 on success, error code on failure
+ */
+int tt_tlb_alloc_mapped(
+    tt_device_t* dev, size_t size, size_t mmap_size, enum tt_tlb_cache_mode cache, tt_tlb_t** out_tlb);
+
+/**
  * @brief Releases a TLB window.
  *
  * @param dev Device handle

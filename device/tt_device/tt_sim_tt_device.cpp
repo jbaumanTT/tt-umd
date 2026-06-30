@@ -156,7 +156,8 @@ TTSimTTDevice::TTSimTTDevice(
     }
 }
 
-std::unique_ptr<TlbWindow> TTSimTTDevice::get_io_window(tlb_data config, TlbMapping mapping, size_t size) {
+std::unique_ptr<TlbWindow> TTSimTTDevice::get_io_window(
+    tlb_data config, TlbMapping mapping, size_t size, size_t /*mmap_length*/) {
     int tlb_index = tlb_allocator_->allocate_tlb_index(size);
     if (tlb_index == -1) {
         UMD_THROW(error::RuntimeError, "No available TLB of requested size.");

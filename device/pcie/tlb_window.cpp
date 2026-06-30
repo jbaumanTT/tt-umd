@@ -105,7 +105,12 @@ void TlbWindow::noc_multicast_write_reconfigure(
 
 TlbHandle& TlbWindow::handle_ref() const { return *tlb_handle; }
 
-size_t TlbWindow::get_size() const { return tlb_handle->get_size() - offset_from_aligned_addr; }
+// Accessible window size is bounded by what is actually mapped into host memory, not the hardware
+// aperture. These differ only when the aperture was deliberately mapped short (e.g. the BH 4 GiB DRAM
+// window with a reserved tail); for all other windows get_mmap_size() == the aperture, so this is
+// unchanged. Note: address alignment in the ctor/configure() still uses the aperture (get_size() on
+// the handle), since alignment is a property of the hardware aperture, not the mapping length.
+size_t TlbWindow::get_size() const { return tlb_handle->get_mmap_size() - offset_from_aligned_addr; }
 
 void TlbWindow::validate(uint64_t offset, size_t size) const {
     if ((offset + size) > get_size()) {

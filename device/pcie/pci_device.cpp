@@ -817,10 +817,11 @@ SemVer PCIDevice::read_kmd_version() {
     return SemVer(version_str);
 }
 
-std::unique_ptr<TlbHandle> PCIDevice::allocate_tlb(const size_t tlb_size, const TlbMapping tlb_mapping) {
+std::unique_ptr<TlbHandle> PCIDevice::allocate_tlb(
+    const size_t tlb_size, const TlbMapping tlb_mapping, const size_t mmap_length) {
     ZoneScopedC(tracy::Color::Cyan);
     try {
-        return std::make_unique<SiliconTlbHandle>(*this, tlb_size, tlb_mapping);
+        return std::make_unique<SiliconTlbHandle>(*this, tlb_size, tlb_mapping, mmap_length);
     } catch (const std::exception &e) {
         if (read_kmd_version() < SemVer(2, 6, 0)) {
             UMD_THROW(
